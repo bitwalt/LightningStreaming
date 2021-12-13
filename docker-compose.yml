@@ -1,0 +1,40 @@
+version: "3.7"
+
+networks:
+  lnnet:
+
+services:
+
+    # Create a service for bitcoin node
+    bitcoind:
+        container_name: bitcoind
+        build: ./lightning/bitcoind/
+        networks:
+        - lnnet
+        expose:
+        - "18443"
+        - "12005"
+        - "12006"
+        restart: always
+
+    # Create a service for lnd node
+    alice:
+        container_name: Alice
+        build: ./lightning/lnd/
+        networks:
+        - lnnet
+        expose:
+        - "9735"
+        restart: always
+
+    # streamer-peer:
+    #     container_name: streamer-peer
+    #     build:  ./
+    #     command: python start_streaming.py
+    #     volumes:
+    #     - .:/workspace/
+    #     # - $MEDIA_PATH:/media/
+    #     env_file:
+    #         - ./.env
+    #     expose:
+    #         - "10000"
