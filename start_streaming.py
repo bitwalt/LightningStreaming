@@ -4,12 +4,25 @@ from video_manager import VideoManager
 from loguru import logger
 from settings import *
 from time import sleep
+from flask import Flask, render_template, Response
 
-def start_random_streaming(alice, bob):
-    alice.ask_catalog(bob)
-    sleep(1)
-    alice.ask_media_streaming(bob, "office")
-    sleep(1)
+
+app = Flask(__name__)
+
+
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    # rendering webpage
+    return render_template('index.html')
+
+@app.route('/video_feed')
+def video_feed():
+    global alice 
+    batch = alice.get_last_batch()
+    print(batch)
+    return Response(batch, mimetype='multipart/x-mixed-replace; boundary=frame')
+
 
 if __name__ == '__main__':
     
@@ -36,8 +49,14 @@ if __name__ == '__main__':
     print(f"Connected client: {alice.name} with server: {alice.host}:{alice.port}")
 
     # Start bazar
-    start_random_streaming(alice, bob)
-    
+    alice.ask_catalog(bob)
+    sleep(1)
+    alice.ask_media_streaming(bob, "office")
+    sleep(1)
+
+    # start the flask app
+    app.run(host="localhost", port=9000, debug=False, threaded=True, use_reloader=False)
+
     
     
     

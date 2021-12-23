@@ -7,9 +7,14 @@ WORKDIR /workspace/
 RUN apt-get update && apt-get upgrade -y
 
 
-COPY . .
-RUN pip install --upgrade pip
-RUN pip install opencv-python 
-RUN pip install loguru p2pnetwork
+COPY ./streamer /workspace/streamer
 
+# RUN pip install --upgrade pip
+# RUN pip install -r requirements.txt
+RUN pip install opencv-python
+RUN pip install opencv-contrib-python
+RUN pip install pyshine
+RUN pip install numpy
+RUN pip install imutils
 
+WORKDIR /workspace/

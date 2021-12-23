@@ -4,6 +4,7 @@ SEND_CATALOG = "MEDIA"
 ASK_MEDIA = "ASK_MEDIA"
 OK_MEDIA = "OK_MEDIA"
 START_SEND = "START_SEND"
+BATCH = "BATCH"
 
 
 class MessageProto:
@@ -29,6 +30,17 @@ class MessageProto:
         }
         return json_msg
     
+    def batch(node_id, data):
+        json_msg = {
+            "cmd": BATCH,
+            "id": node_id,
+            "index": data['index'],
+            "frame": data['frame'],
+        }
+        return json_msg
+        
+        
+        
     def catalogue(node_id, video_names):   
         json_msg = {
             "cmd": SEND_CATALOG,
@@ -55,10 +67,11 @@ class MessageProto:
         }
         return json_msg
       
-    def start_streaming(node_id, invoice):
+    def start_streaming(node_id, invoice, video):
         json_msg = {
             "cmd": START_SEND,
             "id": node_id,
+            'video': video,
             "invoice": invoice,
         }
         return json_msg

@@ -3,7 +3,7 @@ import os, sys
 import cv2
 import os
 from time import sleep
-
+import numpy as np
 """ RAM Requirements:
 
 890 MB for chunks of 10 seconds (1080p video at 15 fps)
@@ -20,6 +20,8 @@ class VideoFile:
         self.opened = False
         self.price = PRICE
         self.video = self.open_video(url_path)
+        self.frame_num = 0
+        self.frame_iter = self.frame_itererator()
         
     def get_frame_chunk_len(self):
         return int(1 * self.fps) 
@@ -56,16 +58,21 @@ class VideoFile:
         self.opened = True
         return video
         
-         
-    def frame_iter(self):
-        frame_num = 0
-        while self.video.grab():
-            chunk = []
-            frame_num += 1
+    
+    def reset_stream(self):
+        self.frame_num = 0
+        print("Resetting stream...")
+        self.video = cv2.VideoCapture(str(self.url_path))
+        
+    
+    def frame_itererator(self):
+        while self.frame_num < self.n_frames:    
+            self.video.grab()
+            self.frame_num += 1
             frame = self.video.retrieve()[1]
-            chunk.append(frame)
-            if len(chunk) == self.frame_chunk_len:
-                yield (frame_num, chunk)
+            frame = np.random.random((200,200))
+            yield self.frame_num, frame
+        self.reset_stream()                    
                             
     def __repr__(self):
         return f"Video: {self.file_name} ({self.file_size} bytes)"    

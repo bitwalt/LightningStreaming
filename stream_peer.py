@@ -6,7 +6,8 @@ from message_proto import *
 import sys
 from time import sleep
 from loguru import logger
-
+from queue import Queue
+import cv2
 
 class StreamPeer(Node):
     """
@@ -21,12 +22,14 @@ class StreamPeer(Node):
         self.id = self.id[:8]
         self.name = name
         print(f"StreamPeer: {self.name} Started")
+        self.web_queue = Queue(maxsize=20)
         self.start()
         
     def add_lightning_wallet(self, ln_wallet:LightningWallet):
         self.ln_wallet = ln_wallet    
         
     def add_video_manager(self, video_manager: VideoManager):
+        print("VideoManager: ", video_manager)
         self.video_manager = video_manager
     
     def add_stream(self, stream: VideoStreamer):
@@ -37,15 +40,17 @@ class StreamPeer(Node):
        
     def node_message(self, node, data):
         """Decode command from message received from a peer """
+        print(f"{self.name} RECEIVED MESSAGE: {data}")
         self.parse_command(node, data)
         
     def parse_command(self, node, data):
         """Parse command from message received from a peer """
+        
         command = data.get("cmd")    
         if command is None:
             raise Exception("Command not found")
-        print(f"{self.name} RECEIVED CMD: {command}")
-    
+
+        print(f"{self.name} Command RECEIVED: {command}")
         if command == ASK_CATALOG:
             # Send my videos to the peer
             self.send_catalog(node)
@@ -61,30 +66,58 @@ class StreamPeer(Node):
         elif command == START_SEND:
             # CHECK IF THE INVOICE HAS BEEN PAID AND START STREAMING
             self.init_streaming_session(node, data)
+        elif command == BATCH:
+            print("Starting to receive frames") 
+            self.hadle_frame_batch(node, data)
         else:
-            print(data)
-     
+            raise Exception("Unknown command")
+
+    def hadle_frame_batch(self, node, data):
+        print(f"{self.name} RECEIVED FRAME BATCH ID: {data['index']}")
+        frame = data.get("frame")
+        _, encodedImage = cv2.imencode(".jpg", frame)
+        result = bytearray(encodedImage)
+        self.web_queue.put(result)
+        
+        
+    def get_last_batch(self):
+        imagebytes = self.web_queue.get()
+        return imagebytes
+
     def init_streaming_session(self, node, data):
+        
+        print(f"\n{self.name} RECEIVED START STREAMING\n {data}")
         received_invoice = data.get("invoice")
+        print(f"{self.name} RECEIVED INVOICE: {received_invoice}")
         if self.ln_wallet.check_invoice(received_invoice):
             video_name = data.get("video")
+            print(f"{self.name} INVOICE IS VALID")
+            print(f"{self.name} videos are: {self.video_manager.video_files}" )
+            print(f"{self.name} video REQUESTED is: {video_name}")
+
             video = self.video_manager.get_video_by_name(video_name)
+            print(f"{self.name} VIDEO: {video}")
+            
             if video is not None:
-                stream = VideoStreamer(video, node)
-                self.start_streaming(stream)
+                stream = VideoStreamer(video, node)    
+                print(f"{self.name} STARTING STREAMING: {video_name}")
+                self.start_streaming(node, stream)
+            else:
+                print(f"{self.name} ERROR: Video not found")
                
-    def start_streaming(self, stream):
+               
+    def start_streaming(self, node, stream):
         self.stream = stream
         # self.stream.start()
         while self.stream.running:
             chunk_price = self.stream.get_chunk_price()
             invoice = self.ln_wallet.generate_invoice(chunk_price)
-            print(f"{self.name} STREAMING: PAY INVOICE: {invoice}")
+            print(f"{self.name} generated new: {invoice}")
             #TODO: SEND INVOCE
             if self.ln_wallet.check_invoice(invoice):
                 # send data to the peer
                 video_data = self.stream.get_new_batch()
-                self.send_video_metadata(stream.node, video_data)
+                self.send_video_metadata(node, video_data)
             else:
                 logger.error("Invoice is not valid")
                 sleep(1)                 
@@ -92,8 +125,12 @@ class StreamPeer(Node):
     def pay_and_start_session(self, node, data):
         """Pay the invoice and start the streaming session"""
         invoice = data.get("invoice")
+        video = data.get("video")
+        # TODO: CHECK HERE IF YOU WANT TO PAY THE INVOICE !!
+
         receipt = self.ln_wallet.pay_invoice(invoice)
-        data = MessageProto.start_streaming(self.id, receipt)
+        data = MessageProto.start_streaming(self.id, invoice, video)
+        print(f"{self.name} PAID INVOICE: {invoice}")
         self.send_message(node, data)
     
     def ask_first_payment(self, node, data):
@@ -121,10 +158,12 @@ class StreamPeer(Node):
         self.send_message(node, data)
 
     def send_video_metadata(self, node, data):
+        data = MessageProto.batch(self.id, data)
+        print(f"{self.name} SENDING BATCH: {data}")
         self.send_message(node, data)
 
     def send_message(self, node, data):
-        print(f"{self.name} SENDING: {data} to {node.name}")
-        # self.send_to_node(node.id, data)
+        """Send message to a peer"""
+        # print(f"{self.name} SENDING: {data['cmd']} to {node.name}")
         self.send_to_nodes(data)
         sleep(1)
