@@ -1,19 +1,27 @@
-FROM --platform=linux/arm64/v8 ubuntu as os-base
-
-ARG BITCOIN_VERSION
-ENV PATH=/opt/bitcoin-${BITCOIN_VERSION}/bin:$PATH
+ARG OS=ubuntu
+ARG OS_VER=focal
+# FROM --platform=linux/amd64 ${OS}:${OS_VER} as os-base
+FROM arm64v8/ubuntu as os-base
+ 
+# Install dependencies
+RUN DEBIAN_FRONTEND=noninteractive \
+    apt-get update -qq && apt-get install -yqq \
+		curl unzip jq bash-completion
 
 FROM os-base as bitcoind-install
-RUN apt-get update -y \
-  && apt-get install -y curl gosu curl unzip jq bash-completion \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN curl -SLO \
-https://bitcoin.org/bin/bitcoin-core-22.0/bitcoin-22.0-arm-linux-gnueabihf.tar.gz \
-#https://bitcoin.org/bin/bitcoin-core-${BITCOIN_VERSION}/bitcoin-${BITCOIN_VERSION}-x86_64-linux-gnu.tar.gz \
-  && tar -xzf *.tar.gz -C /opt \
-  && rm *.tar.gz
+ARG BITCOIND_VER=0.21.0
+# Install Bitcoin Core binaries and libraries
+RUN cd /tmp && \
+	curl -# -sLO https://bitcoincore.org/bin/bitcoin-core-${BITCOIND_VER}/bitcoin-${BITCOIND_VER}-x86_64-linux-gnu.tar.gz && \
+	tar -zxf bitcoin-${BITCOIND_VER}-x86_64-linux-gnu.tar.gz && \
+	cd bitcoin-${BITCOIND_VER} && \
+	install -vD bin/* /usr/bin && \
+	install -vD lib/* /usr/lib && \
+	cd /tmp && \
+	rm bitcoin-${BITCOIND_VER}-x86_64-linux-gnu.tar.gz && \
+	rm -rf bitcoin-${BITCOIND_VER}
+
 # Install runtime scripts, bash-completion and configuration files
 
 # bash completion for bitcoind and bitcoin-cli

@@ -1,0 +1,45 @@
+{
+  "name": "docker-django-vue-postgres-template",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A better way to start a project. Docker, Django, VueJs, Postgres Template and Black Dashboard UI template",
+  "author": "Chris Fuller <chris@iprogramstuff.com>",
+  "scripts": {
+    "serve": "vue-cli-service serve --open",
+    "build": "vue-cli-service build",
+    "e2e": "node test/e2e/runner.js",
+    "lint": "vue-cli-service lint",
+    "dev": "vue-cli-service serve --open",
+    "lint-fix": "vue-cli-service lint --fix"
+  },
+  "dependencies": {
+    "axios": "^0.18.0",
+    "chart.js": "^2.7.3",
+    "register-service-worker": "^1.5.2",
+    "vue": "^2.6.6",
+    "vue-chartjs": "^3.4.0",
+    "vue-i18n": "^8.8.1",
+    "vue-localstorage": "^0.6.2",
+    "vue-router": "^3.0.2",
+    "vue-router-prefetch": "^1.4.0",
+    "vue2-transitions": "^0.2.3",
+    "vuex": "^3.1.0"
+  },
+  "devDependencies": {
+    "@babel/plugin-syntax-dynamic-import": "^7.2.0",
+    "@vue/cli": "^3.5.1",
+    "@vue/cli-plugin-babel": "^3.4.0",
+    "@vue/cli-plugin-eslint": "^3.4.0",
+    "@vue/cli-plugin-pwa": "^3.4.0",
+    "@vue/cli-service": "^3.4.0",
+    "node-sass": "^4.11.0",
+    "sass-loader": "^7.1.0",
+    "vue-cli-plugin-i18n": "^0.5.1",
+    "vue-template-compiler": "^2.6.6"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 11"
+  ]
+}

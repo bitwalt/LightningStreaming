@@ -112,12 +112,12 @@ class StreamPeer(Node):
         while self.stream.running:
             chunk_price = self.stream.get_chunk_price()
             invoice = self.ln_wallet.generate_invoice(chunk_price)
-            print(f"{self.name} generated new: {invoice}")
             #TODO: SEND INVOCE
             if self.ln_wallet.check_invoice(invoice):
                 # send data to the peer
                 video_data = self.stream.get_new_batch()
-                self.send_video_metadata(node, video_data)
+                self.web_queue.put(video_data['frame'])
+                # self.send_video_metadata(node, video_data)
             else:
                 logger.error("Invoice is not valid")
                 sleep(1)                 
@@ -159,7 +159,7 @@ class StreamPeer(Node):
 
     def send_video_metadata(self, node, data):
         data = MessageProto.batch(self.id, data)
-        print(f"{self.name} SENDING BATCH: {data}")
+        print(f"{self.name} SENDING BATCH")
         self.send_message(node, data)
 
     def send_message(self, node, data):

@@ -1,7 +1,9 @@
+#!/bin/bash
+
+
 virtualenv lnd
 
 source lnd/bin/activate
-
 pip install grpcio grpcio-tools googleapis-common-protos
 
 git clone https://github.com/googleapis/googleapis.git

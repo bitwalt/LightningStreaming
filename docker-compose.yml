@@ -18,14 +18,14 @@ services:
         restart: always
 
     # Create a service for lnd node
-    alice:
-        container_name: Alice
-        build: ./lightning/lnd/
-        networks:
-        - lnnet
-        expose:
-        - "9735"
-        restart: always
+    # alice:
+    #     container_name: Alice
+    #     build: ./lightning/lnd/
+    #     networks:
+    #     - lnnet
+    #     expose:
+    #     - "9735"
+    #     restart: always
 
     # streamer-peer:
     #     container_name: streamer-peer

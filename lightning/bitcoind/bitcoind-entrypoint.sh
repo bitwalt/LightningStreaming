@@ -3,10 +3,10 @@ set -Eeuo pipefail
 
 # Start bitcoind
 echo "Starting bitcoind..."
-bitcoind -datadir=/bitcoind -daemon
 
 # Wait for bitcoind startup
 echo -n "Waiting for bitcoind to start"
+
 until bitcoin-cli -datadir=/bitcoind -rpcwait getblockchaininfo  > /dev/null 2>&1
 do
 	echo -n "."
@@ -33,3 +33,5 @@ echo "================================================"
 
 # Executing CMD
 exec "$@"
+
+

@@ -65,6 +65,7 @@ class VideoFile:
         self.video = cv2.VideoCapture(str(self.url_path))
         
     
+    
     def frame_itererator(self):
         while self.frame_num < self.n_frames:    
             self.video.grab()

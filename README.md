@@ -3,19 +3,52 @@ A python implementation of a P2P video streaming protocol by using Lightning Net
 
 **ONLY FOR LEARNING PURPOSE**
 
-**ONLY FOR USE IN REGTEST**
+**ONLY FOR USE IN REGTEST AND NOT SECURE YET**
 
-**NO RESPONSIBILY FOR VIDEO STREAMED** 
+**NO RESPONSIBILITY FOR VIDEOS STREAMED** 
 
 This project has the aim to explore the power of micro-payments enabled with LN and Bitcoin protocol,
 in a P2P network of video streaming.
 
-
-Each node on the network has a lightning node and a bitcoind service running. 
+## Bitcoin Lightning Protocol 
+Each node on the network has a lightning node and a bitcoind service running, in order to maintain self custody of funds. 
 
 Users will be able to open lightning channels to each peer and ask or send video streams.
 
-A stream session is enabled by a micro-payment protocol based on Bolts11 invoices. 
+A streaming session is enabled by a micro-payment streaming protocol based on BOLTS11 invoices and PyPPSPP. 
+
+## Peer-to-peer Streaming Video
+Based on PyPPSPP implementation of Peer-to-Peer Streaming Peer Protocol (PPSPP) [RFC7574],
+enables video streaming in a P2P network.
+
+Videos are represented by Merkle Tree Hash (Swarm ID) and send to other peers by the router peer. 
+
+The connections are in use TCP but soon secured using TLS or macaroons.  
+
+## Video Generation 
+You can generate your own videos (Mandelbrot, Julia, Mandelbrot3D, GANs, ...) 
+or provide your streaming session (Camera, Windows, URLs, Files).
+
+## Dashboard
+A dashboard is available to monitor and visualize the streaming videos. 
+
+
+# Installation 
+
+A docker-compose file will instantiate the following services:
+
+ - bitcoind
+ - lightningd (only LND currently supported)
+ - router_peer ( is used to inform all new clients about other clients in the swarm )
+ - dashboard ( VUE, React)
+
+
+# Dashboard
+A Web Service to visualize and manage the streaming of videos. 
+
+ - BACKEND in Django to monitor and handle swarms and invoices
+
+ - FRONTEND in VUE/Vuetify to visualize and manage the streaming  
 
 
 ## Protocol
@@ -24,7 +57,6 @@ Alice   ----------->
     {"cmd": ASK_MEDIA",
     "video": "Wonderland",
     "auth": "@macaroon" }
-    
         <-----------    Bob
                 {"cmd": OK_MEDIA", "video":Wonderland", 
                 "auth": "@macaroon", "invoice": "lnd123" }
@@ -90,3 +122,9 @@ Classes:
 - TOR-python: https://sylvaindurand.org/use-tor-with-python/
 
 - LN-python: https://dev.lightning.community/guides/python-grpc/
+
+
+# TODO LIST
+
+- Permettere al raspberry di creare un video juliaset da 1MB e servirlo sulla porta 7000
+    
