@@ -22,7 +22,7 @@ import uuid
 import logging
 
 from GlobalParams import GlobalParams as GB
-from Messages.MessageTypes import MsgTypes
+from PyPPSPP.Messages.MessageTypes import MsgTypes
 
 class MsgHandshake(object):
     """A class representing PPSPP handshake message"""

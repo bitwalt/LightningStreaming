@@ -53,11 +53,8 @@ def calculate_hash(path):
 
     print('Calculating Merkle Tree Hash of file {}'.format(path))
     t_start = time.time()
-
-
     mht = MerkleHashTree('sha1', GlobalParams.chunk_size)
     hash = mht.get_file_hash(path)
-
     if hash is None:
         print('Error calculating file hash!')
         return

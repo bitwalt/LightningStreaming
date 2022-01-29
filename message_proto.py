@@ -6,6 +6,12 @@ OK_MEDIA = "OK_MEDIA"
 START_SEND = "START_SEND"
 BATCH = "BATCH"
 
+ASK_MEDIAS = {"from_id" }
+MEDIAS_HAVE = {"from_id", [{"swarm_id": {"file_size", ...}}]}
+ASK_SWARM = {"swarm_id", "N_MESSAGE"}
+OK_SWARM = {"invoice"}
+SEND_CHUNK = {"" }
+
 
 class MessageProto:
     """A class to handle the message protocol."""

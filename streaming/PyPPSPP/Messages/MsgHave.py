@@ -16,7 +16,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from Messages.MessageTypes import MsgTypes
+from PyPPSPP.Messages.MessageTypes import MsgTypes
 from struct import pack_into, unpack
 
 class MsgHave(object):

@@ -45,7 +45,7 @@ class PeerProtocolTCP(asyncio.Protocol):
 
     @property
     def connection_id(self):
-        Return connection ID"""
+        """Return connection ID"""
         return self._connection_id
 
     def connection_made(self, transport):

@@ -1,11 +1,21 @@
 """ 
-API possibili dall'utente
-
+API possibili dall'utente, messaggi che può ricevere il nodo:
 Callback async:
+SERVER
+- GET_SWARM_INFO mandami le info di uno swarm id
+{ id: <id_swarm>,
+ name: <nome_swarm>
+ file_size: <dimensione_file>, 
+ prezzo_per_chunk: <prezzo_chunk>
+ }
 
-- PAYMENT_DONE(invoice) -> check_
+- START_PAYMENT mandami la prima invoice e il primo chunk
+
+
+PAYMENT_DONE(invoice) -> check_
 
 """
+from generators.builder import GeneratorBuilder
 
 async def payment_received(self, invoice):
     # Send new chunk of data
@@ -17,18 +27,19 @@ class LNS_Peer:
     def __init__(self):
         pass
 
-    def create_video(self, dimensions, type):
+    def create_new_video(self, seconds, kind):
         """Create a new video with the given args"""    
-        return "./media/mandelbrot_01.mp4"
+        return GeneratorBuilder.generate(sec=seconds, kind=kind)
     
-    def create_swarm(self, video_file):
+    def create_swarm(self, file_path):
         """ Generate a new swarm from the video file
         - hashfile 
         - generate_invoce
         - best_frame
         """
+        file_path = self.create_new_video(10, 'julia')
+        
         pass
-    
     
     def serve_swarm(self, swarm_id):
         

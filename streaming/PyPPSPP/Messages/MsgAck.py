@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from struct import pack, unpack
-from Messages.MessageTypes import MsgTypes
+from PyPPSPP.Messages.MessageTypes import MsgTypes
 
 class MsgAck(object):
     """A class representing ACK message"""

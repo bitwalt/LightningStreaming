@@ -1,58 +1,38 @@
+import socket,cv2, pickle,struct, time
+import imutils 
 
-# Welcome to PyShine
-# In this video server is receiving video from clients.
-# Lets import the libraries
-import socket, cv2, pickle, struct
-import imutils
-import threading
-import pyshine as ps # pip install pyshine
-import cv2
+class Server:
+    
+    def __init__(self):
+        pass 
 
-server_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-host_name  = socket.gethostname()
-host_ip = socket.gethostbyname(host_name)
-print('HOST IP:',host_ip)
-port = 9999
-socket_address = (host_ip,port)
-server_socket.bind(socket_address)
-server_socket.listen()
-print("Listening at",socket_address)
-
-def show_client(addr,client_socket):
-	try:
-		print('CLIENT {} CONNECTED!'.format(addr))
-		if client_socket: # if a client socket exists
-			data = b""
-			payload_size = struct.calcsize("Q")
-			while True:
-				while len(data) < payload_size:
-					packet = client_socket.recv(4*1024) # 4K
-					if not packet: break
-					data+=packet
-				packed_msg_size = data[:payload_size]
-				data = data[payload_size:]
-				msg_size = struct.unpack("Q",packed_msg_size)[0]
-				
-				while len(data) < msg_size:
-					data += client_socket.recv(4*1024)
-				frame_data = data[:msg_size]
-				data  = data[msg_size:]
-				frame = pickle.loads(frame_data)
-				text  =  f"CLIENT: {addr}"
-				frame =  ps.putBText(frame,text,10,10,vspace=10,hspace=1,font_scale=0.7, 						background_RGB=(255,0,0),text_RGB=(255,250,250))
-				cv2.imshow(f"FROM {addr}",frame)
-				key = cv2.waitKey(1) & 0xFF
-				if key  == ord('q'):
-					break
-			client_socket.close()
-	except Exception as e:
-		print(f"CLINET {addr} DISCONNECTED")
-		pass
-		
-while True:
-	client_socket,addr = server_socket.accept()
-	thread = threading.Thread(target=show_client, args=(addr,client_socket))
-	thread.start()
-	print("Listening for clients...") 
-	
-			
+    def connect_to_client(self, ip='127.0.0.1', port=9070):       
+        self.client_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        self.client_ip = ip  # Here according to your server ip write the address
+        self.client_port = port
+        self.client_socket.connect((self.client_ip, self.client_port))
+        print("Connected to client")
+  
+    def send_video(self, video_file):
+        self.video = cv2.VideoCapture(video_file)
+        if self.client_socket: 
+            while (self.video.isOpened()):
+                try:
+                    ret, frame = self.video.read()
+                    frame = imutils.resize(frame,width=380)
+                    a = pickle.dumps(frame)
+                    message = struct.pack("Q",len(a)) + a
+                    self.client_socket.sendall(message)
+                    print(f"TO: {self.client_ip}",message)
+                    time.sleep(0.3)
+                except Exception as exp:
+                    print(f"ERROR: {exp}")
+                    print('VIDEO FINISHED!')
+                    self.client_socket.close()
+                    break
+                
+                
+if __name__ == '__main__': 
+    server = Server()
+    server.connect_to_client(ip='127.0.0.1', port=9071)
+    server.send_video('/Users/walter/Development/LightningStreaming/media/mandelbrot_01.mp4')

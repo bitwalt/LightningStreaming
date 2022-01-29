@@ -23,6 +23,7 @@ import socket
 import argparse
 import time
 import sys
+from random import randint
 
 from PeerProtocolUDP import PeerProtocolUDP
 from PeerProtocolTCP import PeerProtocolTCP
@@ -115,7 +116,6 @@ def main(args):
 
     # TODO - check if connected to the Tracekr!
     tracker.set_tracker_protocol(traceker_server)
-    from random import randint
     ip_port = randint(5000, 7000)
 
     if args.tcp:

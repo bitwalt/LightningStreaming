@@ -2,27 +2,43 @@ from pathlib import Path
 import os, sys
 import cv2
 import os
-from time import sleep
+import time
 import numpy as np
-""" RAM Requirements:
+import binascii
+from video_util.merkle_tree import MerkleTree
 
-890 MB for chunks of 10 seconds (1080p video at 15 fps)
-"""
-MAX_CHUNK_SIZE = 9999999
-PRICE = 1000
+PRICE = 1
+CHUNK_SIZE = 1024
+
 
 class VideoFile:
     """ A video file for the LightningStreaming peer server. """
 
-    def __init__(self, url_path, seconds_chunk=1):
+    def __init__(self, url_path, chunk_size=CHUNK_SIZE):
         self.url_path = url_path
         self.file_name = Path(url_path).stem
         self.opened = False
+        self.chunk_size = chunk_size
         self.price = PRICE
         self.video = self.open_video(url_path)
         self.frame_num = 0
         self.frame_iter = self.frame_itererator()
-        
+      
+      
+    def calculate_hash(self, path):
+        """Calculate a hash of a given file"""
+        print('Calculating Merkle Tree Hash of file {}'.format(path))
+        t_start = time.time()
+        mht = MerkleTree('sha1', self.chunk_size)
+        hash = mht.get_file_hash(path)
+        if hash is None:
+            print('Error calculating file hash!')
+            return
+
+        print('Given file hash is: {}. Calculated in {:.2f} s.'.format(
+            str(binascii.hexlify(hash)), time.time() - t_start))
+
+      
     def get_frame_chunk_len(self):
         return int(1 * self.fps) 
     
@@ -47,7 +63,6 @@ class VideoFile:
         
     def open_video(self, url_path):
         assert os.path.exists(self.url_path), f"{url_path} does not exist"
-
         video = cv2.VideoCapture(str(self.url_path))
         self.width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -64,8 +79,7 @@ class VideoFile:
         print("Resetting stream...")
         self.video = cv2.VideoCapture(str(self.url_path))
         
-    
-    
+        
     def frame_itererator(self):
         while self.frame_num < self.n_frames:    
             self.video.grab()

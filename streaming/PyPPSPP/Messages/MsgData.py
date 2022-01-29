@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import datetime
 from struct import pack, pack_into, unpack
 
-from Messages.MessageTypes import MsgTypes
+from PyPPSPP.Messages.MessageTypes import MsgTypes
 
 class MsgData(object):
     """A class representing PPSPP handshake message"""

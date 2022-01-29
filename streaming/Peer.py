@@ -6,11 +6,11 @@ import argparse
 import time
 import sys
 
-from PeerProtocolUDP import PeerProtocolUDP
-from PeerProtocolTCP import PeerProtocolTCP
-from TrackerClientProtocol import TrackerClientProtocol
-from SimpleTracker import SimpleTracker
-from Hive import Hive
+from PyPPSPP.PeerProtocolUDP import PeerProtocolUDP
+from PyPPSPP.PeerProtocolTCP import PeerProtocolTCP
+from PyPPSPP.TrackerClientProtocol import TrackerClientProtocol
+from PyPPSPP.SimpleTracker import SimpleTracker
+from PyPPSPP.Hive import Hive
 from multiprocessing import Process
 
 
@@ -38,8 +38,7 @@ class StreamingPeer(Process):
             try:
                 tracker_listen = self.loop.create_connection(
                     lambda:
-                        TrackerClientProtocol(self.tracker),
-                        self.tracker_ip, self.tracker_port)
+                        TrackerClientProtocol(self.tracker), self.tracker_ip, self.tracker_port)
                 tracker_transport, traceker_server = self.loop.run_until_complete(tracker_listen)
                 break
             except Exception as exp:
@@ -71,8 +70,7 @@ class StreamingPeer(Process):
                     port = self.port)
         protocol = self.loop.run_until_complete(listen)
     
-        # At this point we have a connection to the tracker
-        # and have a listening (TCP/UDP) socket
+        # At this point we have a connection to the tracker and have a listening (TCP/UDP) socket
         sw = self.hive.create_swarm(protocol, self.args)
     
         # Register with the tracker

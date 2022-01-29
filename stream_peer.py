@@ -8,7 +8,28 @@ from time import sleep
 from loguru import logger
 from queue import Queue
 import cv2
+from dataclasses import dataclass
+import hashlib, random
 
+@dataclass
+class PeerInfo:
+    """Class for keeping track of an item in inventory."""
+    peer_id: str
+    ip: str
+    port: int = 9069
+
+    def __init__(self, ip, port):
+        self.ip = ip
+        self.port = port
+        self.peer_id = self.generate_id()
+               
+    def generate_id(self):
+        """Generates a unique ID for each node."""
+        id = hashlib.sha256()
+        t = self.host + str(self.port) + str(random.randint(1, 99999999))
+        id.update(t.encode('ascii'))
+        return id.hexdigest()
+        
 class StreamPeer(Node):
     """
     A StreamPeer to pay another peer for a video or sending ours.
@@ -41,6 +62,7 @@ class StreamPeer(Node):
     def node_message(self, node, data):
         """Decode command from message received from a peer """
         print(f"{self.name} RECEIVED MESSAGE: {data}")
+        command, data = MessagesParser.parse_message(data)
         self.parse_command(node, data)
         
     def parse_command(self, node, data):

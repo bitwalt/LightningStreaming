@@ -53,12 +53,25 @@ A Web Service to visualize and manage the streaming of videos.
 
 ## Protocol
 ```
-Alice   ----------->        
+1. Alice connects to a list of available nodes (Random, LN wallets, group of people, friends, bots) 
+2. She ask for the list of available media
+3. She decides to connect to swarm_id: <hash256> 
+4. Bob responds and ask for payment streaming start
+    5. Alice accept and start paying invoices
+    6. Bob sends video chunks 
+
+ASK_MEDIAS = {"from_id" }
+MEDIAS_HAVE = {"from_id", [{"swarm_id": {"file_size", ...}}]}
+ASK_SWARM = {"swarm_id", "N_MESSAGE"}
+OK_SWARM = {"invoice"}
+SEND_CHUNK = {"" }
+
+Alice ----------->        
     {"cmd": ASK_MEDIA",
     "video": "Wonderland",
     "auth": "@macaroon" }
         <-----------    Bob
-                {"cmd": OK_MEDIA", "video":Wonderland", 
+                {"cmd": OK_MEDIA", "auth": "@macaroon", "video":Wonderland", 
                 "auth": "@macaroon", "invoice": "lnd123" }
 
 Alice   ----------->
