@@ -7,15 +7,17 @@ services:
 
     # Create a service for bitcoin node
     bitcoind:
-        container_name: bitcoind
-        build: ./lightning/bitcoind/
-        networks:
-        - lnnet
-        expose:
-        - "18443"
-        - "12005"
-        - "12006"
-        restart: always
+      platform: linux/amd64
+      container_name: bitcoind
+      build: ./lightning/bitcoind/
+      command: python manage.py runserver 0.0.0.0:3000
+      networks:
+      - lnnet
+      expose:
+      - "18443"
+      - "12005"
+      - "12006"
+      restart: always
 
     # Create a service for lnd node
     # alice:

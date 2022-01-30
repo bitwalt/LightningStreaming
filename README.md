@@ -137,7 +137,4 @@ Classes:
 - LN-python: https://dev.lightning.community/guides/python-grpc/
 
 
-# TODO LIST
-
-- Permettere al raspberry di creare un video juliaset da 1MB e servirlo sulla porta 7000
     

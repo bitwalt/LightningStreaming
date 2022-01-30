@@ -2,25 +2,31 @@ ARG OS=ubuntu
 ARG OS_VER=focal
 # FROM --platform=linux/amd64 ${OS}:${OS_VER} as os-base
 FROM arm64v8/ubuntu as os-base
- 
+#  FROM ${OS}:${OS_VER} as os-base
+#
 # Install dependencies
 RUN DEBIAN_FRONTEND=noninteractive \
     apt-get update -qq && apt-get install -yqq \
-		curl unzip jq bash-completion
+		curl unzip jq bash-completion wget
 
 FROM os-base as bitcoind-install
 
 ARG BITCOIND_VER=0.21.0
 # Install Bitcoin Core binaries and libraries
-RUN cd /tmp && \
-	curl -# -sLO https://bitcoincore.org/bin/bitcoin-core-${BITCOIND_VER}/bitcoin-${BITCOIND_VER}-x86_64-linux-gnu.tar.gz && \
-	tar -zxf bitcoin-${BITCOIND_VER}-x86_64-linux-gnu.tar.gz && \
-	cd bitcoin-${BITCOIND_VER} && \
-	install -vD bin/* /usr/bin && \
-	install -vD lib/* /usr/lib && \
-	cd /tmp && \
-	rm bitcoin-${BITCOIND_VER}-x86_64-linux-gnu.tar.gz && \
-	rm -rf bitcoin-${BITCOIND_VER}
+ARG ARCH=arm-linux-gnueabihf
+# ARG ARCH=x86_64-linux-gnu
+
+RUN cd /tmp 
+RUN	wget https://bitcoincore.org/bin/bitcoin-core-0.21.0/bitcoin-0.21.0-arm-linux-gnueabihf.tar.gz
+RUN	tar -zxf bitcoin-0.21.0-arm-linux-gnueabihf.tar.gz
+RUN cd bitcoin-${BITCOIND_VER} 
+
+# RUN	install -vD bin/* /usr/bin && \
+# 	install -vD lib/* /usr/lib 
+
+# RUN cd /tmp && \
+# 	rm bitcoin-${BITCOIND_VER}-{ARCH}.tar.gz && \
+# 	rm -rf bitcoin-${BITCOIND_VER}
 
 # Install runtime scripts, bash-completion and configuration files
 

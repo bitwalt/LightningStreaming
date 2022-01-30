@@ -51,16 +51,24 @@ message Peer {
     string peer_id = 1;
     string ip = 2;
     int32 port = 3;
-    Macaroon macaroon = 2; 
+    Macaroon macaroon = 4; 
 }
+
 
 /* Messages */ 
 
 //=> 1. Handshake
-message Handshake {
+message AskHandshake {
     Peer client_peer = 1;
     string handshake = 2;
 }
+
+//<= 2. Handshake Response
+message HandshakeResponse {
+    Peer server_peer = 1;
+    string handshake_status = 2;
+}
+
 
 //<= 2. Ask for all available media to the peer
 message AskMedia {
@@ -68,7 +76,7 @@ message AskMedia {
 }
 
 //=> 3. List of media files available for stream (Already in RAM)
-message OkMedia {
+message MediaRespose {
     Peer server_peer = 1;
     repeated Swarm swarms = 2;
 }
@@ -80,8 +88,8 @@ message AskSwarm {
     Receipt receipt = 3;
 }
 
-//=> 4. Send a chunk of data
-message SendChunk {
+//=> 4. Send a chunk of data (!!)
+message ChunkResponse {
     Peer server_peer = 1;
     string swarm_id = 2;
     Chunk chunk = 3;
@@ -90,8 +98,29 @@ message SendChunk {
 }
 
 //=> 4. Pay a chunk of data 
-message PayChunk {
+message AskChunkPayment {
     Peer client_peer = 1;
     string chunk_id = 2;
     Receipt receipt = 4;
 }
+
+// RPC call
+
+service Handshaker {
+    rpc handshake (AskHandshake) returns (HandshakeResponse) {}
+ }
+
+ service Catalogue {
+    rpc looking (AskMedia) returns (MediaRespose) {}
+ }
+
+ service StartStream {
+    rpc startstream (AskSwarm) returns (ChunkResponse) {}
+ }
+
+ service SendStreaming {
+    rpc send_chunk (AskChunkPayment) returns (ChunkResponse) {}
+ }
+ service GetStreaming {
+    rpc pay_chunk (ChunkResponse) returns (AskChunkPayment) {}
+ }
