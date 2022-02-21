@@ -1,5 +1,7 @@
 from time import sleep
 import os
+import hashlib, random
+from lightning.invoice import Invoice
 
 class LightningWallet:
     """ A lightning wallet for streaming data. """
@@ -8,18 +10,24 @@ class LightningWallet:
         self.name = name
         self.balance = balance
         self.generated_invoice = 0
+        self.invoices = []
+        self.macaroons = [] # list of macaroons emitted by node
 
     def connect(self):
         return True
 
-    
+    def check_macaroon(self, macaroon: str): 
+        # return macaroon in self.macaroons
+        return True
+        
     def generate_invoice(self, amt):
         """ Generate an invoice for the amount. """
         self.generated_invoice += 1 
-        return f"LN_{str(amt + self.generated_invoice * 2)}"
+        invoice_hash = f"LN_{str(amt)}{hashlib.sha256(str(random.random()).encode()).hexdigest()}"
+        return Invoice(invoice_hash, amt)
 
     def pay_invoice(self, invoice):
-        self.balance -= 10
+        self.balance -= invoice.amount
         return invoice
 
     def check_invoice(self, invoice):

@@ -1,19 +1,22 @@
-from concurrent import futures
-
 import grpc
-import greeting_pb2
-import greeting_pb2_grpc
+from concurrent import futures
+import messages.session_pb2_grpc as pb2_grpc
+from video_manager import VideoManager
+from stream_peer import StreamPeer
+from settings import SERVER_PORT, MEDIA_FOLDER
 
-class Greeter(greeting_pb2_grpc.GreeterServicer):
-   def greet(self, request, context):
-      print("Got request " + str(request))
-      return greeting_pb2.ServerOutput(message='{0} {1}!'.format(request.greeting, request.name))
-	  
-def server():
-   server = grpc.server(futures.ThreadPoolExecutor(max_workers=2))
-   greeting_pb2_grpc.add_GreeterServicer_to_server(Greeter(), server)
-   server.add_insecure_port('[::]:50051')
+def serve():
+   
+   stream_peer = StreamPeer("Alice", "localhost", SERVER_PORT)
+   video_manager = VideoManager(MEDIA_FOLDER)
+   stream_peer.add_video_manager(video_manager)
+   stream_peer.get_swarms()
+   server = grpc.server(futures.ThreadPoolExecutor(max_workers=5))
+   pb2_grpc.add_StreamerServicer_to_server(stream_peer, server)
+   server.add_insecure_port(f'[::]:{SERVER_PORT}')
    print("gRPC starting")
    server.start()
    server.wait_for_termination()
-server()
+   
+if __name__ == "__main__":
+   serve()  

@@ -5,10 +5,12 @@ from time import sleep
 from threading import Thread
 from video_util.video_file import VideoFile
 import numpy as np
-from loguru import logger
 from queue import Queue
-CHUNK_SEC = 1
 
+from logging import getLogger
+logger = getLogger(__name__)
+
+CHUNK_SEC = 1
 
 class VideoStreamer(Thread):
     """

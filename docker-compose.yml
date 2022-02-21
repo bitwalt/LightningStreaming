@@ -5,19 +5,31 @@ networks:
 
 services:
 
+    client:
+        build: .
+        command: python3 unary_client.py
+        depends_on: 
+            - server
+        network_mode: "host"
+
+    server:
+        build: .
+        command: python3 unary_server.py
+        network_mode: "host"
+
     # Create a service for bitcoin node
-    bitcoind:
-      platform: linux/amd64
-      container_name: bitcoind
-      build: ./lightning/bitcoind/
-      command: python manage.py runserver 0.0.0.0:3000
-      networks:
-      - lnnet
-      expose:
-      - "18443"
-      - "12005"
-      - "12006"
-      restart: always
+    # bitcoind:
+    #   platform: linux/amd64
+    #   container_name: bitcoind
+    #   build: ./lightning/bitcoind/
+    #   command: python manage.py runserver 0.0.0.0:3000
+    #   networks:
+    #   - lnnet
+    #   expose:
+    #   - "18443"
+    #   - "12005"
+    #   - "12006"
+    #   restart: always
 
     # Create a service for lnd node
     # alice:

@@ -1,11 +1,19 @@
 import grpc
+import messages.session_pb2 as msg
+import messages.session_pb2_grpc as pb2_grpc
+from stream_peer import StreamPeer
 
-import greeting_pb2
-import greeting_pb2_grpc
+from settings import SERVER_PORT, CLIENT_PORT
 
 def run():
-   with grpc.insecure_channel('localhost:50051') as channel:
-      stub = greeting_pb2_grpc.GreeterStub(channel)
-      response = stub.greet(greeting_pb2.ClientInput(name='John', greeting = "Yo"))
-   print("Greeter client received following from server: " + response.message)   
-run()
+   stream_peer = StreamPeer("Alice", "localhost", CLIENT_PORT)
+   with grpc.insecure_channel(f'localhost:{SERVER_PORT}') as channel:
+      stub = pb2_grpc.StreamerStub(channel)
+      # 1. Handshake
+      response = stub.handshake(stream_peer.ask_handshake())
+      print("Handshake request: ", response.handshake_status)  
+      # 2. Ask for media
+      response = stub.looking(stream_peer.ask_media())
+      print("Looking request: ", response.swarms)
+if __name__ == '__main__':
+   run()

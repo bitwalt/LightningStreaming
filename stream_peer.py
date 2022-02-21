@@ -1,16 +1,32 @@
-from p2pnetwork.node import Node
+# from p2pnetwork.node import Node
+import re
 from lightning.ln_wallet import LightningWallet
 from video_manager import VideoManager
 from streamer import VideoStreamer
-from message_proto import *
-import sys
 from time import sleep
-from loguru import logger
 from queue import Queue
 import cv2
 from dataclasses import dataclass
 import hashlib, random
+from swarm import SwarmGenerator
 
+import grpc
+from concurrent import futures
+import messages.session_pb2 as msg
+import messages.session_pb2_grpc as pb2_grpc
+
+from logging import getLogger
+from loguru import logger
+
+@dataclass
+class Macaroon:
+    """Class representing a macaroon for authentication"""
+    
+    @staticmethod
+    def generate(peer_id):
+        return hashlib.sha256((str(random.random()) + peer_id).encode()).hexdigest()
+        
+        
 @dataclass
 class PeerInfo:
     """Class for keeping track of an item in inventory."""
@@ -18,19 +34,24 @@ class PeerInfo:
     ip: str
     port: int = 9069
 
-    def __init__(self, ip, port):
+    def __init__(self, name, ip, port):
+        self.name = name
         self.ip = ip
         self.port = port
         self.peer_id = self.generate_id()
-               
+                         
     def generate_id(self):
         """Generates a unique ID for each node."""
         id = hashlib.sha256()
-        t = self.host + str(self.port) + str(random.randint(1, 99999999))
+        t = self.name + str(self.port) + str(random.randint(1, 99999999))
         id.update(t.encode('ascii'))
-        return id.hexdigest()
-        
-class StreamPeer(Node):
+        return id.hexdigest()[:8]
+    
+    def __str__(self):
+        return f"{self.name}<{self.peer_id} at {self.ip}:{self.port}"
+    
+         
+class StreamPeer(pb2_grpc.StreamerServicer):
     """
     A StreamPeer to pay another peer for a video or sending ours.
 
@@ -38,13 +59,25 @@ class StreamPeer(Node):
         - Show available media files
         - Start a streaming handshake session
     """
-    def __init__(self, host, port, name=None, id=None, callback=None, max_connections=0):
-        super(StreamPeer, self).__init__(host, port, id, callback, max_connections)
-        self.id = self.id[:8]
+    def __init__(self, name, host, port, max_connections=5):
+        self.peer_info = PeerInfo(name, host, port)
         self.name = name
-        print(f"StreamPeer: {self.name} Started")
+        self.max_connections = max_connections
         self.web_queue = Queue(maxsize=20)
-        self.start()
+        
+        self.macaroon = msg.Macaroon(id=Macaroon.generate(self.peer_info.peer_id))
+        self.ln_wallet = LightningWallet(name, balance=1000)
+        logger.debug(self.peer_info)
+        self.clients = []
+        self.swarms = []
+     
+                
+    def get_peer(self) -> msg.Peer:
+        return msg.Peer(peer_id=self.peer_info.peer_id, 
+                        ip=self.peer_info.ip,
+                        port=self.peer_info.port,
+                        macaroon = self.macaroon
+                        )
         
     def add_lightning_wallet(self, ln_wallet:LightningWallet):
         self.ln_wallet = ln_wallet    
@@ -59,40 +92,15 @@ class StreamPeer(Node):
     def get_video_names(self):
         return self.video_manager.get_video_names()
        
-    def node_message(self, node, data):
-        """Decode command from message received from a peer """
-        print(f"{self.name} RECEIVED MESSAGE: {data}")
-        command, data = MessagesParser.parse_message(data)
-        self.parse_command(node, data)
-        
-    def parse_command(self, node, data):
-        """Parse command from message received from a peer """
-        
-        command = data.get("cmd")    
-        if command is None:
-            raise Exception("Command not found")
-
-        print(f"{self.name} Command RECEIVED: {command}")
-        if command == ASK_CATALOG:
-            # Send my videos to the peer
-            self.send_catalog(node)
-        elif command == SEND_CATALOG:
-            # Show the catalogue that I requested
-            MessageProto.show_catalog(data)
-        elif command == ASK_MEDIA:
-            # Send the first invoice
-            self.ask_first_payment(node, data) 
-        elif command == OK_MEDIA:
-            # Decide to pay the invoice 
-            self.pay_and_start_session(node, data)            
-        elif command == START_SEND:
-            # CHECK IF THE INVOICE HAS BEEN PAID AND START STREAMING
-            self.init_streaming_session(node, data)
-        elif command == BATCH:
-            print("Starting to receive frames") 
-            self.hadle_frame_batch(node, data)
-        else:
-            raise Exception("Unknown command")
+    def get_swarms(self):  
+        video_files = self.video_manager.get_all_videos()
+        swarms = []
+        for video_file in video_files:
+            invoice = self.ln_wallet.generate_invoice(video_file.chunk_price)
+            swarm_generator = SwarmGenerator(self.peer_info.peer_id, video_file, invoice)
+            swarms.append(swarm_generator.generate())    
+        return swarms 
+    
 
     def hadle_frame_batch(self, node, data):
         print(f"{self.name} RECEIVED FRAME BATCH ID: {data['index']}")
@@ -100,8 +108,7 @@ class StreamPeer(Node):
         _, encodedImage = cv2.imencode(".jpg", frame)
         result = bytearray(encodedImage)
         self.web_queue.put(result)
-        
-        
+            
     def get_last_batch(self):
         imagebytes = self.web_queue.get()
         return imagebytes
@@ -126,8 +133,7 @@ class StreamPeer(Node):
                 self.start_streaming(node, stream)
             else:
                 print(f"{self.name} ERROR: Video not found")
-               
-               
+                      
     def start_streaming(self, node, stream):
         self.stream = stream
         # self.stream.start()
@@ -144,48 +150,63 @@ class StreamPeer(Node):
                 logger.error("Invoice is not valid")
                 sleep(1)                 
 
-    def pay_and_start_session(self, node, data):
-        """Pay the invoice and start the streaming session"""
-        invoice = data.get("invoice")
-        video = data.get("video")
-        # TODO: CHECK HERE IF YOU WANT TO PAY THE INVOICE !!
+    ### HANDSHAKE
 
-        receipt = self.ln_wallet.pay_invoice(invoice)
-        data = MessageProto.start_streaming(self.id, invoice, video)
-        print(f"{self.name} PAID INVOICE: {invoice}")
-        self.send_message(node, data)
+    def ask_handshake(self) -> msg.HandshakeRequest:
+        return msg.HandshakeRequest(client_peer=self.get_peer())
+        
+    def handshake(self, request, context):
+        client_peer = request.client_peer
+        logger.debug(f"{self.name} Received HANDSHAKE request from {request.client_peer}")  
+        client_macaroon = client_peer.macaroon
+        if self.ln_wallet.check_macaroon(client_macaroon.id):    
+            logger.debug(f"Client authenticated")  
+            self.clients.append(client_peer.peer_id)
+            return msg.HandshakeResponse(server_peer=self.get_peer(), handshake_status="OK")
+        else:
+            logger.warning(f"Client NOT authenticated")
+            return msg.HandshakeResponse(server_peer=self.get_peer(), handshake_status="FAIL")   
     
-    def ask_first_payment(self, node, data):
-        video_name = data.get("video")
-        video = self.video_manager.get_video_by_name(video_name)
-        video_price = video.get_price()
-        invoice = self.ln_wallet.generate_invoice(video_price)
-        data = MessageProto.send_unpaid_invoice(self.id, video_name, invoice)
-        self.send_message(node, data)
+    ### MEDIA
         
-                   
-    def ask_catalog(self, node):
-        data = MessageProto.look(self.id)
-        self.send_message(node, data)
+    def ask_media(self) -> msg.MediaRequest:
+        return msg.MediaRequest(client_peer=self.get_peer())
         
-        
-    def ask_media_streaming(self, node, video_name):
-        data = MessageProto.ask_media(self.id, video_name)
-        self.send_message(node, data)
+    def looking(self, request, context):
+        # receive AskMedia, returns MediaRespose
+        peer_id = request.client_peer.peer_id
+        logger.debug(f"{self.name} Received MEDIA media request: {peer_id}")
+    
+        if peer_id not in self.clients:
+            logger.warning(f"{self.name} Client not authenticated")
+            return msg.MediaRespose(server_peer=self.get_peer(),
+                                    status=msg.RequestStatus.ERROR,
+                                    swarms=[])
+        else:
+            logger.debug(f"{self.name} Client authenticated")
+            logger.debug(f"Sending swarms...")            
+            return msg.MediaRespose(server_peer=self.get_peer(), 
+                                    status=msg.RequestStatus.OK,
+                                    swarms=self.get_swarms())
 
-    def send_catalog(self, node):
-        """Send video files to node"""
-        video_names = self.get_video_names()
-        data = MessageProto.catalogue(self.id, video_names)
-        self.send_message(node, data)
+    def start_stream(self, request, context):
+        # receive AskSwarm returns ChunkResponse
+        print("Starting streaming")
+        return msg.ChunkResponse()
+    
+    def send_stream(self, request, context):
+        # receive stream of AskChunkPayment, returns streams of ChunkResponse
+        pass   
+    
+    def pay_stream(self, request, context):
+        # receive stream of ChunkResponse, returns streams of AskChunkPayment
+        pass
+    
 
-    def send_video_metadata(self, node, data):
-        data = MessageProto.batch(self.id, data)
-        print(f"{self.name} SENDING BATCH")
-        self.send_message(node, data)
-
-    def send_message(self, node, data):
-        """Send message to a peer"""
-        # print(f"{self.name} SENDING: {data['cmd']} to {node.name}")
-        self.send_to_nodes(data)
-        sleep(1)
+    def serve(self):
+        server = grpc.server(futures.ThreadPoolExecutor(max_workers=5))
+        pb2_grpc.add_StreamerServicer_to_server(self, server)
+        server.add_insecure_port(f'[::]:{self.peer_info.port}')
+        logger.debug(f"gRPC server starting at {self.peer_info.port}")
+        server.start()
+        server.wait_for_termination()
