@@ -38,10 +38,11 @@ message Video {
 }
 
 message Swarm {
-    Video video = 1;
-    Image poster = 2;
-    int32 total_price = 3;
-    LNInvoice invoice = 4;
+    string swarm_id = 1;
+    Video video = 2;
+    Image poster = 3;
+    int32 total_price = 4;
+    LNInvoice invoice = 5;
 }
 
 message Chunk {
@@ -89,7 +90,7 @@ enum RequestStatus {
 }
 
 //=> 3. List of media files available for stream (Already in RAM)
-message MediaRespose {
+message MediaResponse {
     Peer server_peer = 1;
     RequestStatus status = 2;
     repeated Swarm swarms = 3;
@@ -125,7 +126,7 @@ service Streamer {
     rpc handshake (HandshakeRequest) returns (HandshakeResponse) {}
     
     // List all media available for streaming to the peer
-    rpc looking (MediaRequest) returns (MediaRespose) {}
+    rpc looking (MediaRequest) returns (MediaResponse) {}
 
     // Start a streaming session 
     rpc start_stream (AskSwarm) returns (ChunkResponse) {}

@@ -34,6 +34,10 @@ class LightningWallet:
         """ Check if the invoice is valid. """
         return True 
 
+    def is_paid_receipt(self, recepit):
+        """ Check if the receipt has been paid correctly. """
+        return True 
+    
     def get_total_balance(self):
         return self.balance 
 

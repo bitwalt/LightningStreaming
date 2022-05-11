@@ -8,14 +8,14 @@ A python implementation of a P2P video streaming protocol by using Lightning Net
 **NO RESPONSIBILITY FOR VIDEOS STREAMED** 
 
 This project has the aim to explore the power of micro-payments enabled with LN and Bitcoin protocol,
-in a P2P network of video streaming.
+in a P2P network of video streaming and file transfers.
 
 ## Bitcoin Lightning Protocol 
 Each node on the network has a lightning node and a bitcoind service running, in order to maintain self custody of funds. 
 
 Users will be able to open lightning channels to each peer and ask or send video streams.
 
-A streaming session is enabled by a micro-payment streaming protocol based on BOLTS11 invoices and PyPPSPP. 
+A streaming session is enabled by a micro-payment streaming protocol based on BOLTS11 invoices and gRPC callbacks. 
 
 ## Peer-to-peer Streaming Video
 Based on PyPPSPP implementation of Peer-to-Peer Streaming Peer Protocol (PPSPP) [RFC7574],

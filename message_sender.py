@@ -14,6 +14,12 @@ def run():
       print("Handshake request: ", response.handshake_status)  
       # 2. Ask for media
       response = stub.looking(stream_peer.ask_media())
-      print("Looking request: ", response.swarms)
+      print(f"SERVER: {response.server_peer.peer_id}")
+      print(f"REQUEST: {response.status}")
+      print(f"SWARMS: {response.swarms}")
+      swarm = response.swarms[0]
+      response = stub.start_stream(stream_peer.ask_for_start_stream(swarm))
+      print()
+      print("Done")
 if __name__ == '__main__':
    run()

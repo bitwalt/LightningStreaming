@@ -37,6 +37,6 @@ class SwarmGenerator:
 
 if __name__ == '__main__':
     video_file = VideoFile("media/mandelbrot_01.mp4")
-    swarm_generator = SwarmGenerator(video_file, Invoice("alice", "ln123abc", 100))
+    swarm_generator = SwarmGenerator(video_file, Invoice("ln123abc", 100))
     swarm = swarm_generator.generate()
     print(swarm)

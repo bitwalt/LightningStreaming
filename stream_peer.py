@@ -155,7 +155,7 @@ class StreamPeer(pb2_grpc.StreamerServicer):
     def ask_handshake(self) -> msg.HandshakeRequest:
         return msg.HandshakeRequest(client_peer=self.get_peer())
         
-    def handshake(self, request, context):
+    def handshake(self, request, context) -> msg.HandshakeResponse:
         client_peer = request.client_peer
         logger.debug(f"{self.name} Received HANDSHAKE request from {request.client_peer}")  
         client_macaroon = client_peer.macaroon
@@ -172,33 +172,56 @@ class StreamPeer(pb2_grpc.StreamerServicer):
     def ask_media(self) -> msg.MediaRequest:
         return msg.MediaRequest(client_peer=self.get_peer())
         
-    def looking(self, request, context):
+    def looking(self, request, context) -> msg.MediaResponse:
         # receive AskMedia, returns MediaRespose
         peer_id = request.client_peer.peer_id
         logger.debug(f"{self.name} Received MEDIA media request: {peer_id}")
     
         if peer_id not in self.clients:
             logger.warning(f"{self.name} Client not authenticated")
-            return msg.MediaRespose(server_peer=self.get_peer(),
+            return msg.MediaResponse(server_peer=self.get_peer(),
                                     status=msg.RequestStatus.ERROR,
                                     swarms=[])
         else:
             logger.debug(f"{self.name} Client authenticated")
             logger.debug(f"Sending swarms...")            
-            return msg.MediaRespose(server_peer=self.get_peer(), 
+            return msg.MediaResponse(server_peer=self.get_peer(), 
                                     status=msg.RequestStatus.OK,
                                     swarms=self.get_swarms())
 
-    def start_stream(self, request, context):
+
+    ### STREAMING
+
+    def ask_for_start_stream(self, swarm:msg.Swarm) -> msg.AskSwarm: 
+        # send AskSwarm message in order to start a streaming session
+        invoice = swarm.invoice.invoice
+        receipt = self.ln_wallet.pay_invoice(invoice)
+        return msg.AskSwarm(client_peer=self.get_peer(), 
+                            swarm_id=swarm.swarm_id,
+                            receipt=receipt)
+        
+    def start_stream(self, request, context) -> msg.ChunkResponse:
         # receive AskSwarm returns ChunkResponse
         print("Starting streaming")
-        return msg.ChunkResponse()
+        swarm_id = request.swarm_id
+        chunk = self.video_manager.get_chunk(swarm_id)
+        receipt = request.receipt
+        if self.ln_wallet.is_paid_receipt(receipt):
+            return msg.ChunkResponse(server_peer=self.get_peer(),
+                                     swarm_id=swarm_id,
+                                     chunk=chunk,
+                                     invoice=,
+                                     next_chunk_id=next_chunk_id,
+                                     )
+        else: 
+            return msg.ChunkResponse()
+            
     
-    def send_stream(self, request, context):
+    def stream(self, request, context):
         # receive stream of AskChunkPayment, returns streams of ChunkResponse
         pass   
     
-    def pay_stream(self, request, context):
+    def pay_chunk(self, request, context):
         # receive stream of ChunkResponse, returns streams of AskChunkPayment
         pass
     

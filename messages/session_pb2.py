@@ -912,12 +912,12 @@ MediaRequest = _reflection.GeneratedProtocolMessageType('MediaRequest', (_messag
   })
 _sym_db.RegisterMessage(MediaRequest)
 
-MediaRespose = _reflection.GeneratedProtocolMessageType('MediaRespose', (_message.Message,), {
+MediaResponse = _reflection.GeneratedProtocolMessageType('MediaRespose', (_message.Message,), {
   'DESCRIPTOR' : _MEDIARESPOSE,
   '__module__' : 'session_pb2'
   # @@protoc_insertion_point(class_scope:MediaRespose)
   })
-_sym_db.RegisterMessage(MediaRespose)
+_sym_db.RegisterMessage(MediaResponse)
 
 AskSwarm = _reflection.GeneratedProtocolMessageType('AskSwarm', (_message.Message,), {
   'DESCRIPTOR' : _ASKSWARM,

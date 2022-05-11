@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import messages.session_pb2 as session__pb2
+import session_pb2 as session__pb2
 
 
 class StreamerStub(object):
@@ -22,7 +22,7 @@ class StreamerStub(object):
         self.looking = channel.unary_unary(
                 '/Streamer/looking',
                 request_serializer=session__pb2.MediaRequest.SerializeToString,
-                response_deserializer=session__pb2.MediaRespose.FromString,
+                response_deserializer=session__pb2.MediaResponse.FromString,
                 )
         self.start_stream = channel.unary_unary(
                 '/Streamer/start_stream',
@@ -90,7 +90,7 @@ def add_StreamerServicer_to_server(servicer, server):
             'looking': grpc.unary_unary_rpc_method_handler(
                     servicer.looking,
                     request_deserializer=session__pb2.MediaRequest.FromString,
-                    response_serializer=session__pb2.MediaRespose.SerializeToString,
+                    response_serializer=session__pb2.MediaResponse.SerializeToString,
             ),
             'start_stream': grpc.unary_unary_rpc_method_handler(
                     servicer.start_stream,
@@ -147,7 +147,7 @@ class Streamer(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/Streamer/looking',
             session__pb2.MediaRequest.SerializeToString,
-            session__pb2.MediaRespose.FromString,
+            session__pb2.MediaResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
