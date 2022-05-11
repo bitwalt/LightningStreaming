@@ -1,3 +1,3 @@
-[submodule "vuejs-nodejs-docker-compose"]
-	path = vuejs-nodejs-docker-compose
-	url = https://github.com/bbachi/vuejs-nodejs-docker-compose
+# [submodule "vuejs-nodejs-docker-compose"]
+# 	path = vuejs-nodejs-docker-compose
+# 	url = https://github.com/bbachi/vuejs-nodejs-docker-compose
