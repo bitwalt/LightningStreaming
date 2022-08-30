@@ -1,3 +1,4 @@
+# DRAFT - Not Completed 
 # Peer-to-peer video streaming and micropayments on Lightning Network 
 A python implementation of a P2P video streaming protocol by using Lightning Network invoices. 
 
